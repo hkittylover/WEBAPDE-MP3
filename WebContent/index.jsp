@@ -9,8 +9,35 @@
 <link rel="stylesheet"
 	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="jquery-3.2.1.min.js"></script>
+<script src="jquery-ui.min.js"></script>
 <link rel="stylesheet" href="stylesheet.css">
-
+<link rel="stylesheet" href="jquery-ui.css">
+<style>
+ul.ui-autocomplete {
+  width: 240px !important;
+  background-color: whitesmoke;
+  margin-left: 1em;
+  border-style: solid;
+}
+.ui-autocomplete { 
+	position: absolute; 
+	cursor: default;
+	z-index:30 !important;
+	max-height: 100px;
+	overflow-y: auto;
+	/* prevent horizontal scrollbar */
+	overflow-x: hidden;
+	/* add padding to account for vertical scrollbar */
+	padding-right: 20px;
+     }  
+.ui-menu-item {
+  display: block;
+  width: 240px;
+  height: 30px;
+  padding: 2px auto;
+  color: #424242;
+}
+</style>
 <script>
                 var root = 'https://jsonplaceholder.typicode.com';
                 var allphotos = [];
@@ -309,11 +336,6 @@
                             $img_span.stop().hide();
                             $img_span.empty();
                             $img_span.append("<span>Add tag</span>");
-                            $img_span.css({marginLeft:"10px"});
-                            $img_span.stop().show(250);
-                        } else if($img_i.length == 0 || $img_i_plus.length == 1) {
-                            $img_span.stop().hide();
-                            $img_span.append("<i class=\"fa fa-times\" id=\"fa-timestag\" aria-hidden=\"true\"></i>");
                             $img_span.css({marginLeft:"10px"});
                             $img_span.stop().show(250);
                         }
@@ -682,6 +704,15 @@
                         console.log(ajx);
                         return b;
                     });
+                    $( "#tagsearch" ).autocomplete({
+                        source: ${tagnames},
+                        open : function(){
+                            $(".ui-autocomplete:visible").css({top:"+=0",left:"+=10"});
+                        }
+                    });
+                    $(document).on("click", ".fa-times", function() {
+                        alert("REMOVE TAG");
+                    });
                 });
             </script>
 <title>Oink</title>
@@ -694,8 +725,8 @@
 
 		<div id="hright">
 			<form action="search" method="get" class="index-search-form" name="">
-				<input name="keyword" type="text"
-					placeholder="What are you looking for?">
+				<input name="keyword" type="text" title="type &quot;a&quot;"
+					placeholder="What are you looking for?" id="tagsearch">
 				<button class="" type="submit">
 					<i class="fa fa-search" aria-hidden="true"></i>
 				</button>

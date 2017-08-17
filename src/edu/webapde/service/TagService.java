@@ -7,6 +7,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 import edu.webapde.bean.Photo;
 import edu.webapde.bean.Tag;
@@ -27,6 +28,30 @@ public class TagService {
 			tagList = q.getResultList();
 			trans.commit();
 			System.out.println("Result from getAllTags(): " + tagList);
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		} finally {
+			em.close();
+		}
+
+		return tagList;
+	}
+	
+	public static List<String> getAllTagnames() {
+		List<String> tagList = null;
+
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("mysqldb");
+		EntityManager em = emf.createEntityManager();
+
+		EntityTransaction trans = em.getTransaction();
+
+		try {
+			trans.begin();
+			TypedQuery<String> q = em.createQuery("SELECT tagname FROM tags", String.class);
+			tagList = q.getResultList();
+			trans.commit();
+			System.out.println("Result from getAllTagnames(): " + tagList);
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();

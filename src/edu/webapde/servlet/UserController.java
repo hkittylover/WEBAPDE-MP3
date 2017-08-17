@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 import edu.webapde.bean.Photo;
 import edu.webapde.bean.User;
 import edu.webapde.service.PhotoService;
+import edu.webapde.service.TagService;
 import edu.webapde.service.UserService;
 
 /**
@@ -171,7 +172,10 @@ public class UserController extends HttpServlet {
 
 			List<Photo> sharedPhotoList = PhotoService.getAllSharedPhotos(username);
 			request.setAttribute("sharedPhotoList", new Gson().toJson(sharedPhotoList));
-
+			
+			List<String> tags = TagService.getAllTagnames();
+			request.setAttribute("tagnames", new Gson().toJson(tags));
+			
 			System.out.println("LOGGED IN");
 			// forward to success page or page if success
 			RequestDispatcher rd = request.getRequestDispatcher("index.jsp");
@@ -194,6 +198,9 @@ public class UserController extends HttpServlet {
 
 			request.setAttribute("sharedPhotoList", "[]");
 			request.setAttribute("role", "guest");
+			
+			List<String> tags = TagService.getAllTagnames();
+			request.setAttribute("tagnames", new Gson().toJson(tags));
 
 			RequestDispatcher rd = request.getRequestDispatcher("index.jsp");
 			rd.forward(request, response);

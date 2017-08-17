@@ -200,7 +200,7 @@ to {
 }
 
 /* CSS for tabs */
-ul, li {
+div#usercontentnav ul, div#usercontentnav li {
 	list-style: none;
 }
 

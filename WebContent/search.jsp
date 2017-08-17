@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
     pageEncoding="ISO-8859-1"%>
     <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+    <%@ taglib uri = "http://java.sun.com/jsp/jstl/core" prefix = "c" %>
     <html>
         <head>
             <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -15,39 +16,37 @@
                 var my_photos_cnt = 0;
                 var numViewPhoto = 5;
 
-                function showPhoto(photoObj, divAppend) {
+                function showPhoto(p) {
                 	var a_photo = document.createElement("a");
-
+                	a_photo.textContent = "";
+                    a_photo.href = "#" + p.photoId;
+                	
                     var new_div_tab_photo = document.createElement("div");
                     new_div_tab_photo.className = "tab_photo";
 
-                    var new_tab_title = document.createElement("div");
-                    new_tab_title.className = "tab_title";
-                    new_tab_title.textContent = photoObj.title;
-                    var new_div_user = document.createElement("div");
-                    new_div_user.className = "tab_title tab_user";
-                    var a_user = document.createElement("a");
-                    a_user.href = "userpage?user=" + photoObj.username;
-                    a_user.textContent = photoObj.username;
-                    //new_div_tab_photo.className = "tab_photo";
-
-                    //thumbnails
                     var new_thumb = document.createElement("img");
                     new_thumb.className = "thumbnail";
-                    //new_thumb.setAttribute("src", photoObuserpage.htmlthumbnailUrl);
-                    new_thumb.setAttribute("src", photoObj.filepath);
-                    a_photo.textContent = "";
-                    a_photo.href = "#" + photoObj.photoId;
-
-                    // add thumbnail to div (image)
+                    new_thumb.setAttribute("src", p.filepath);
+                    
+                    var new_tab_title = document.createElement("div");
+                    new_tab_title.className = "tab_title";
+                    new_tab_title.textContent = p.title;
+                    
+                    var new_div_user = document.createElement("div");
+                    new_div_user.className = "tab_title tab_user";
+                    
+                    var a_user = document.createElement("a");
+                    a_user.href = "userpage?userId=" + p.user.userId;
+                    a_user.textContent = p.user.username;
+                    
                     new_div_tab_photo.appendChild(new_thumb);
                     new_div_tab_photo.appendChild(new_tab_title);
                     new_div_user.appendChild(a_user);
                     new_div_tab_photo.appendChild(new_div_user);
-                    // add link to div
+                    
                     a_photo.appendChild(new_div_tab_photo);
 
-                    $(divAppend).append(a_photo);
+                    $("#tab_con").append(a_photo);
                     $(new_div_tab_photo).show(500);
                 }
 
@@ -152,8 +151,8 @@
                     modal_caption.innerHTML = p.title;
                     modal_img.src = p.filepath;
                     modal_description.innerHTML = p.description;
-                    a_user.href = "userpage?user=" + p.username;
-                    a_user.textContent = p.username;
+                    a_user.href = "userpage?userId=" + p.user.userId;
+                    a_user.textContent = p.user.username;
                     modal_uploader.appendChild(a_user);
 
                     $("#imgcontainer2").empty();
@@ -161,7 +160,7 @@
                     for(i = 0; i < p.tags.length; i++) {
                         new_img_tag.push(document.createElement("div"));
                         new_img_tag[i].className = "imgtag";
-                        new_img_tag[i].textContent = "#" + p.tags[i];
+                        new_img_tag[i].textContent = "#" + p.tags[i].tagname;
                         $("#imgcontainer2").append(new_img_tag[i]);
                     }
                     modal_thing.style.display = "table";
@@ -195,8 +194,8 @@
                     modal_caption.innerHTML = p.title;
                     modal_img.src = p.filepath;
                     modal_description.innerHTML = p.description;
-                    a_user.href = "userpage?user=" + p.username;
-                    a_user.textContent = p.username;
+                    a_user.href = "userpage?userId=" + p.user.userId;
+                    a_user.textContent = p.user.username;
                     modal_uploader.appendChild(a_user);
 
                     $("#imgcontainer2").empty();
@@ -204,7 +203,7 @@
                     for(i = 0; i < p.tags.length; i++) {
                         new_img_tag.push(document.createElement("div"));
                         new_img_tag[i].className = "imgtag";
-                        new_img_tag[i].textContent = "#" + p.tags[i];
+                        new_img_tag[i].textContent = "#" + p.tags[i].tagname;
                         $("#imgcontainer2").append(new_img_tag[i]);
                     }
                     modal_thing.style.display = "table";
@@ -219,7 +218,7 @@
 	                    for(i = 0; i < p.allowedUsers.length; i++) {
 	                        new_img_user.push(document.createElement("div"));
 	                        new_img_user[i].className = "imgtag";
-	                        new_img_user[i].textContent = p.allowedUsers[i];
+	                        new_img_user[i].textContent = p.allowedUsers[i].username;
 	                        $("#imgusercontainer2").append(new_img_user[i]);
 	                    }
 	                    modal_thing.style.display = "table";
@@ -251,10 +250,6 @@
 
                 $(document).ready(function () {
                     //history.replaceState('', document.title, window.location.pathname + "?keyword=${keyword}");
-                    $("#hlink_login").hide();
-                    $("#hlink_reg").hide();
-                    $("#hlink_logout").hide();
-                    $("#profile").hide();
                     var role = "${sessionScope.role}";
                     var action = "${action}";
                     console.log(role);
@@ -265,10 +260,6 @@
                     if(role == "user") {
                         console.log("I AM AN USER")
                         console.log("${sessionScope.sUsername} ");
-                        $("#hlink_login").hide();
-                        $("#hlink_reg").hide();
-                        $("#hlink_logout").show();
-                        $("#profile").show();
                         $("#results-public-con").show();
                         $("#results-shared-con").show();
                         $("#results-my-con").show();
@@ -281,10 +272,6 @@
                         // you can show the section for private photos
                     }
                     else {
-                        $("#hlink_login").show();
-                        $("#hlink_reg").show();
-                        $("#hlink_logout").hide();
-                        $("#profile").hide();
                         $("#results-public-con").show();
                         $("#results-shared-con").hide();
                         $("#results-my-con").hide();
@@ -476,28 +463,34 @@
                         }
                    });
 
-                    // on hash change, show photo
+                 	// on hash change, show photo
                     $(window).on('hashchange',function(e){
                         //e.preventDefault();
                         if(window.location.hash.slice(1) != "") {
-                        	var ajx = $.get("view?id=" + window.location.hash.slice(1), function(obj) {
-                                history.replaceState('', document.title, "http://localhost:8080/WEBAPDE-MP3/photo?id=" + window.location.hash.slice(1));
-                                if(obj != "null") {
-                                    console.log(obj);
-                                    var p = JSON.parse(obj);
-
-                                    console.log(p);
-
-                                    if(p.username == "${sessionScope.sUsername}")
-                                        showMyImgModal(p);
-                                    else
-                                        showImgModal(p);
-                                }
-                                else {
-                                    // no access
-                                }
-                                
-                            });
+                        	$.ajax({
+                				"url" : "photodetails",
+                				"method" : "POST",
+                				"success" : function(result) {
+                					console.log(result);
+                					history.replaceState('', document.title, "http://localhost:8080/WEBAPDE-MP3/photo?id=" + window.location.hash.slice(1));
+                                    if(result != null) {
+                                        console.log(result);
+                                        if(result.user.username == "${sessionScope.sUsername}")
+                                            showMyImgModal(result);
+                                        else
+                                            showImgModal(result);
+                                    }
+                                    else {
+                                        // no access
+                                        showErrModal();
+                                        history.replaceState('', document.title, "http://localhost:8080/WEBAPDE-MP3/photo?id=" + window.location.hash.slice(1));
+                                    }
+                					
+                				},
+                				"data" : {
+                					"id" : window.location.hash.slice(1)
+                				}
+                			});
                         }
                     });
 
@@ -554,7 +547,7 @@
                                 window.location.href="logout";
                             }
                             if(event.target.text == hlinklist[i].text && hlinklist[i].text == "${sessionScope.sUsername}") {
-                                window.location.href="userpage?user=${sessionScope.sUsername}";
+                                window.location.href="userpage?userId=${sessionScope.sUserId}";
                             }
                         }
 
@@ -679,15 +672,24 @@
                     <a id="hlogo" href="homepage">OINK</a>
                 </div>
                 <div id="hright">
-                    <form action="search" method="get" class="index-search-form" name="">
-                        <input name="keyword" type="text" placeholder="What are you looking for?">
-                        <button class="" type="submit"><i class="fa fa-search" aria-hidden="true"></i></button>
-                    </form>
-                    <a class="hlink" id="profile" href="userpage?user=${sessionScope.sUsername}">${sessionScope.sUsername}</a>
-                    <a class="hlink" id="hlink_login" href="login">Login</a> 
-                    <a class="hlink" id="hlink_reg" href="register">Register</a>
-                    <a class="hlink" id="hlink_logout" href="logout">Logout</a> 
-                </div>
+					<form action="search" method="get" class="index-search-form" name="">
+						<input name="keyword" type="text"
+							placeholder="What are you looking for?">
+						<button class="" type="submit">
+							<i class="fa fa-search" aria-hidden="true"></i>
+						</button>
+					</form>
+					<c:choose>
+		   				<c:when test="${sessionScope.role == 'user'}">
+							<a class="hlink" id="profile" href="userpage?userId=${sessionScope.sUserId}">${sessionScope.sUsername}</a>
+							<a class="hlink" id="hlink_logout" href="logout">Logout</a>
+						</c:when>
+						<c:otherwise>
+							<a class="hlink" id="hlink_login" href="login">Login</a> 
+							<a class="hlink" id="hlink_reg" href="register">Register</a> 
+						</c:otherwise>
+					</c:choose>
+				</div>
             </div>
 
 

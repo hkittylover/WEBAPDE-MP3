@@ -22,7 +22,7 @@ import edu.webapde.service.UserService;
 /**
  * Servlet implementation class PhotoController
  */
-@WebServlet(urlPatterns = { "/allphotos", "/upload", "/share", "/photodetails", "/tag", "/search", "/photo" })
+@WebServlet(urlPatterns = { "/allphotos", "/upload", "/share", "/photodetails", "/tag", "/search", "/photo", "/deletetag" })
 public class PhotoController extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
@@ -87,6 +87,10 @@ public class PhotoController extends HttpServlet {
 		case "/photo":
 			request.setAttribute("action", "photo");
 			showPhoto(request, response);
+			break;
+		case "/deletetag":
+			request.setAttribute("action", "deletetag");
+			deleteTag(request, response);
 			break;
 		default:
 			break;
@@ -155,6 +159,24 @@ public class PhotoController extends HttpServlet {
 
 	private void getAllPhotos(HttpServletRequest request, HttpServletResponse response) {
 
+	}
+	
+	private void deleteTag(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		HttpSession session = request.getSession();
+		int userId = (int) session.getAttribute("sUserId");
+		int photoId = Integer.parseInt(request.getParameter("photoId"));
+		String tagname = request.getParameter("tagname");
+		Photo p = PhotoService.getPhoto(photoId);
+		System.out.println("I AM HEREE");
+		System.out.println(p.getUser().getUserId());
+		System.out.println(userId);
+		if(p.getUser().getUserId() == userId) {
+			p.removeTag(tagname);
+			PhotoService.updatePhoto(p.getPhotoId(), p);
+			response.getWriter().write("true");
+		} else {
+			response.getWriter().write("false");
+		}
 	}
 
 	private void uploadPhoto(HttpServletRequest request, HttpServletResponse response)

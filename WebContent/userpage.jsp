@@ -148,7 +148,9 @@
                     for(i = 0; i < p.tags.length; i++) {
                         new_img_tag.push(document.createElement("div"));
                         new_img_tag[i].className = "imgtag";
-                        new_img_tag[i].textContent = "#" + p.tags[i].tagname;
+                        new_img_tag[i].innerHTML = "#" + p.tags[i].tagname + "<span class=\"remove-tag\" style=\"margin-left: 8px;\"><i class=\"fa fa-times\" id=\"fa-timestag\" aria-hidden=\"true\" data-photoId = \"" + p.photoId + "\" data-tagname=\"" + p.tags[i].tagname + "\"></i></span>";
+                        new_img_tag[i].setAttribute("data-tagname", p.tags[i].tagname);
+                        new_img_tag[i].setAttribute("data-photoId", p.photoId);
                         $("#imgcontainer2").append(new_img_tag[i]);
                     }
                     modal_thing.style.display = "table";
@@ -309,6 +311,31 @@
                             $img_span.text("");
                             $img_span.css({marginLeft:"0px"});
                         });
+                    });
+                    
+                    $(document).on("click", ".fa-times#fa-timestag", function() {
+                    	var tagname = $(this).attr("data-tagname");
+                    	var photoId = $(this).attr("data-photoId");
+                    	if(confirm("Do you want to delete the \"" + tagname + "\" tag?")) {
+	                    	$.ajax({
+	            				"url" : "deletetag",
+	            				"method" : "POST",
+	            				"success" : function(result) {
+	            					console.log(result);
+	                                if(result == "true") {
+	                                	$("div.imgtag[data-tagname=" + tagname + "]").remove();
+	                                }
+	                                else {
+	                                    alert("Delete Tag Failed");
+	                                }
+	            					
+	            				},
+	            				"data" : {
+	            					"photoId" : photoId,
+	            					"tagname" : tagname
+	            				}
+	            			});
+                    	}
                     });
 
                     $(document).on("click", ".imgtag#addtag", function() {

@@ -104,8 +104,21 @@ public class PhotoService {
 			p.setDescription(newPhoto.getDescription());
 			p.setPrivacy(newPhoto.getPrivacy());
 			p.setFilepath(newPhoto.getFilepath());
-			p.setTags(newPhoto.getTags());
-			p.setAllowedUsers(newPhoto.getAllowedUsers());
+			Iterator<User> pUsers = newPhoto.getAllowedUsers().iterator();
+			p.setAllowedUsers(new HashSet());
+			while (pUsers.hasNext()) {
+				User au = em.find(User.class, pUsers.next().getUserId());
+				p.getAllowedUsers().add(au);
+				System.out.println(1);
+			}
+
+			Iterator<Tag> pTags = newPhoto.getTags().iterator();
+			p.setTags(new HashSet());
+			while (pTags.hasNext()) {
+				Tag t = em.find(Tag.class, pTags.next().getTagId());
+				p.getTags().add(t);
+				System.out.println(1);
+			}
 			trans.commit();
 			b = true;
 			System.out.println("Result from updatePhotos(id, photo): " + p);
@@ -330,8 +343,8 @@ public class PhotoService {
 			trans.begin();
 			Query q = em.createNativeQuery(
 					"SELECT * FROM photos p, alloweduser au, phototag pt, tags t, users u WHERE p.photoId = au.photoId AND p.photoId = pt.photoId AND pt.tagId = t.tagId AND au.userId = u.userId AND t.tagname = '"
-							+ tag + "' AND p.privacy = 'private' AND u.username = " + username
-							+ " ORDER BY p.photoId DESC;",
+							+ tag + "' AND p.privacy = 'private' AND u.username = '" + username
+							+ "' ORDER BY p.photoId DESC;",
 					Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
@@ -383,8 +396,8 @@ public class PhotoService {
 			trans.begin();
 			Query q = em
 					.createNativeQuery(
-							"SELECT * FROM photos p, phototag pt, tags t, users u WHERE p.photoId = pt.photoId AND pt.tagId = t.tagId AND p.userId = u.userId AND u.username = "
-									+ username + " AND t.tagname = '" + tag + "' ORDER BY p.photoId DESC;",
+							"SELECT * FROM photos p, phototag pt, tags t, users u WHERE p.photoId = pt.photoId AND pt.tagId = t.tagId AND p.userId = u.userId AND u.username = '"
+									+ username + "' AND t.tagname = '" + tag + "' ORDER BY p.photoId DESC;",
 							Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
@@ -856,6 +869,11 @@ public class PhotoService {
 		// addTagsToPhoto(1, "Hello1");
 		// System.out.println(getPhoto(1));
 
-		System.out.println(getAllPublicPhotos());
+		//System.out.println(getAllPublicPhotos());
+		Photo p = getPhoto(1);
+		System.out.println(p);
+		p.removeTag("game");
+		updatePhoto(p.getPhotoId(), p);
+		System.out.println(p);
 	}
 }

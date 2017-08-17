@@ -198,4 +198,9 @@ public class Photo {
 		return false;
 	}
 	
+	public void removeTag(String tagname) {
+		Tag t = new Tag();
+		t.setTagname(tagname);
+		tags.remove(t);
+	}
 }
