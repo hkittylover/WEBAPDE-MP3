@@ -195,8 +195,8 @@ public class PhotoService2 {
 
 		EntityTransaction trans = em.getTransaction();
 
-		if (!UserService.isUserFound(userId))
-			return null;
+		//if (!UserService.isUserFound(userId))
+		//	return null;
 
 		try {
 			trans.begin();

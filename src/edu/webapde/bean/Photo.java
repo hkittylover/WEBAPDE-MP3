@@ -1,7 +1,9 @@
 package edu.webapde.bean;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -15,6 +17,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+
+import org.hibernate.collection.internal.PersistentSet;
 
 import edu.webapde.service.TagService;
 
@@ -37,7 +41,7 @@ public class Photo {
 	@ManyToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
 	@JoinTable(name="phototag", joinColumns={@JoinColumn(name="photoId")}, inverseJoinColumns={@JoinColumn(name="tagId")})
 	private Set<Tag> tags;
-	@ManyToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, mappedBy="alloweduser")
+	@ManyToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
 	@JoinTable(name="alloweduser", joinColumns={@JoinColumn(name="photoId")}, inverseJoinColumns={@JoinColumn(name="userId")})
 	private Set<User> allowedUsers;
 
@@ -114,7 +118,7 @@ public class Photo {
 		return tags;
 	}
 
-	public void setTags(Set<Tag> tags) {
+	public void setTags(Set tags) {
 		this.tags = tags;
 	}
 
@@ -122,7 +126,7 @@ public class Photo {
 		return allowedUsers;
 	}
 
-	public void setAllowedUsers(Set<User> allowedUsers) {
+	public void setAllowedUsers(Set allowedUsers) {
 		this.allowedUsers = allowedUsers;
 	}
 
@@ -159,7 +163,7 @@ public class Photo {
 		return addTag(new Tag(tag));
 	}
 	public boolean addTag(Tag tag) {
-		if(!containInList((HashSet<Tag>) tags, tag) && !tag.getTagname().equals("")) {
+		if(!containInList(tags, tag) && !tag.getTagname().equals("")) {
 			tags.add(TagService.addTag(tag));
 			return true;
 		}
@@ -167,14 +171,14 @@ public class Photo {
 	}
 	
 	public boolean addAllowedUser(User u) {
-		if(!containInList((HashSet<User>) allowedUsers, u) && !this.user.equals(u) && !u.getUsername().equals("")) {
+		if(!containInList(allowedUsers, u) && !this.user.equals(u) && !u.getUsername().equals("")) {
 			allowedUsers.add(u);
 			return true;
 		}
 		return false;
 	}
 	
-	private boolean containInList(HashSet<User> list, User user) {
+	public boolean containInList(Set list, User user) {
 		Iterator<User> i = list.iterator();
 		while(i.hasNext()) {
 			User u = i.next();
@@ -184,7 +188,7 @@ public class Photo {
 		return false;
 	}
 	
-	private boolean containInList(HashSet<Tag> list, Tag tag) {
+	public boolean containInList(Set list, Tag tag) {
 		Iterator<Tag> i = list.iterator();
 		while(i.hasNext()) {
 			Tag t = i.next();

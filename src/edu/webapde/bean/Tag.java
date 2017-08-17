@@ -1,10 +1,15 @@
 package edu.webapde.bean;
 
+import java.util.List;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 
 @Entity(name="tags")
 public class Tag {
@@ -13,7 +18,10 @@ public class Tag {
 	private int tagId;
 	@Column(nullable=false)
 	private String tagname;
-	
+	/*
+	@ManyToMany(cascade=CascadeType.ALL, mappedBy="tags")
+	private Set<Photo> tags;
+	*/
 	public Tag() {
 		// TODO Auto-generated constructor stub
 	}

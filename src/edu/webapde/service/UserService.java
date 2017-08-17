@@ -103,6 +103,60 @@ public class UserService {
 		return u;
 	}
 
+	public static boolean isUserFound(String username) {
+		List<User> u = null;
+
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("mysqldb");
+		EntityManager em = emf.createEntityManager();
+
+		EntityTransaction trans = em.getTransaction();
+
+		boolean b = false;
+
+		try {
+			trans.begin();
+			TypedQuery<User> q = em.createQuery("FROM users WHERE username = '" + username + "'", User.class);
+			u = q.getResultList();
+			trans.commit();
+
+			// if the user is found
+			if (u.size() != 0)
+				b = true;
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		} finally {
+			em.close();
+		}
+
+		return b;
+	}
+	
+	public static List<String> getAllUsername() {
+		List<String> usernames = null;
+
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("mysqldb");
+		EntityManager em = emf.createEntityManager();
+
+		EntityTransaction trans = em.getTransaction();
+
+		boolean b = false;
+
+		try {
+			trans.begin();
+			TypedQuery<String> q = em.createQuery("SELECT username FROM users", String.class);
+			usernames = q.getResultList();
+			trans.commit();
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		} finally {
+			em.close();
+		}
+		
+		return usernames;
+	}
+	
 	public static String getUserDescription(int userId) {
 		User u = null;
 
@@ -134,37 +188,9 @@ public class UserService {
 
 		return str;
 	}
-
-	public static boolean isUserFound(int userId) {
-		User u = null;
-
-		EntityManagerFactory emf = Persistence.createEntityManagerFactory("mysqldb");
-		EntityManager em = emf.createEntityManager();
-
-		EntityTransaction trans = em.getTransaction();
-
-		boolean b = false;
-
-		try {
-			trans.begin();
-			u = em.find(User.class, userId);
-			trans.commit();
-
-			// if the user is found
-			if (u != null)
-				b = true;
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		} finally {
-			em.close();
-		}
-
-		return b;
-	}
-
-	public static boolean isUserFound(String username) {
-		List<User> u = null;
+	
+	public static String getUserDescription(String username) {
+		String description = "";
 
 		EntityManagerFactory emf = Persistence.createEntityManagerFactory("mysqldb");
 		EntityManager em = emf.createEntityManager();
@@ -175,21 +201,18 @@ public class UserService {
 
 		try {
 			trans.begin();
-			TypedQuery<User> q = em.createQuery("FROM users WHERE username = '" + username + "'", User.class);
-			u = q.getResultList();
+			TypedQuery<String> q = em.createQuery("SELECT description FROM users WHERE username = '" + username + "'", String.class);
+			if(q.getResultList().size() > 0)
+				description = q.getResultList().get(0);
 			trans.commit();
-
-			// if the user is found
-			if (u.size() != 0)
-				b = true;
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
 		} finally {
 			em.close();
 		}
-
-		return b;
+		
+		return description;
 	}
 
 	public static void main(String[] args) {
@@ -199,6 +222,6 @@ public class UserService {
 		else
 			System.out.println("ERROR");
 
-		System.out.println(getUser(1));
+		System.out.println(getAllUsername());
 	}
 }

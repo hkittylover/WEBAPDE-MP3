@@ -1,12 +1,17 @@
 package edu.webapde.bean;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 
 @Entity(name="users")
 public class User {
@@ -19,20 +24,23 @@ public class User {
 	private char[] password;
 	@Column
 	private String description;
-	
+	/*
+	@OneToMany(cascade=CascadeType.ALL, mappedBy="user")
+	private Set<Photo> photos;
+	@ManyToMany(cascade=CascadeType.ALL, mappedBy="allowedUsers")
+	private Set<Photo> sharedPhotos;
+	*/
 	
 	public User() {
 		// TODO Auto-generated constructor stub
-		this.username = null;
-		this.password = null;
-		this.description = "";
+		
 	}
 	
 	public User(String username, char[] password) {
 		// TODO Auto-generated constructor stub
-		this();
 		this.username = username;
 		this.password = password;
+		this.description = "";
 	}
 	
 	public User(String username, String password) {

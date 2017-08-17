@@ -12,6 +12,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.google.gson.Gson;
+
 import edu.webapde.bean.Photo;
 import edu.webapde.bean.User;
 import edu.webapde.service.PhotoService;
@@ -20,7 +22,7 @@ import edu.webapde.service.UserService;
 /**
  * Servlet implementation class PhotoController
  */
-@WebServlet(urlPatterns = { "/allphotos", "/alltags", "/upload", "/share", "/view", "/tag", "/search", "/photo" })
+@WebServlet(urlPatterns = { "/allphotos", "/upload", "/share", "/photodetails", "/tag", "/search", "/photo" })
 public class PhotoController extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
@@ -59,10 +61,8 @@ public class PhotoController extends HttpServlet {
 		request.setAttribute("action", "none");
 		switch (urlPattern) {
 		case "/allphotos":
+			request.setAttribute("action", "allphotos");
 			getAllPhotos(request, response);
-			break;
-		case "/alltags":
-			getAllTags(request, response);
 			break;
 		case "/upload":
 			request.setAttribute("action", "upload");
@@ -72,8 +72,8 @@ public class PhotoController extends HttpServlet {
 			request.setAttribute("action", "share");
 			sharePhoto(request, response);
 			break;
-		case "/view":
-			request.setAttribute("action", "view");
+		case "/photodetails":
+			request.setAttribute("action", "photodetails");
 			viewPhoto(request, response);
 			break;
 		case "/tag":
@@ -119,20 +119,28 @@ public class PhotoController extends HttpServlet {
 				for (int i = 0; i < arr.length; i++) {
 					password += arr[i];
 				}
-				User u = UserService.getUser(cookieValue1, password);
-
+				User u = UserService.getUser(cookieValue1);
+				if(u.isPasswordEqual(password)) {
 				// set session for username
-				session.setAttribute("sUsername", username);
-				session.setAttribute("sDescription", u.getDescription());
-				session.setAttribute("role", "user");
+					session.setAttribute("sUsername", u.getUsername());
+					session.setAttribute("sUserId", u.getUserId());
+					session.setAttribute("role", "user");
+	
+					System.out.println("LOGGED IN");
+				} 
+				else {
+					session.setAttribute("sUsername", "");
+					session.setAttribute("sUserId", "");
+					session.setAttribute("role", "guest");
 
-				System.out.println("LOGGED IN");
+					System.out.println("AM I HERE???????????");
+				}
 			}
 
 			// if not found go public
 			else {
 				session.setAttribute("sUsername", "");
-				session.setAttribute("sDescription", "");
+				session.setAttribute("sUserId", "");
 				session.setAttribute("role", "guest");
 
 				System.out.println("AM I HERE???????????");
@@ -141,15 +149,11 @@ public class PhotoController extends HttpServlet {
 			System.out.println("cookie not found");
 			session.setAttribute("role", "0");
 			session.setAttribute("sUsername", "");
-			session.setAttribute("sDescription", "");
+			session.setAttribute("sUserId", "");
 		}
 	}
 
 	private void getAllPhotos(HttpServletRequest request, HttpServletResponse response) {
-
-	}
-
-	private void getAllTags(HttpServletRequest request, HttpServletResponse response) {
 
 	}
 
@@ -158,33 +162,32 @@ public class PhotoController extends HttpServlet {
 		HttpSession session = request.getSession();
 		String role = (String) session.getAttribute("role");
 
-		String username = (String) session.getAttribute("sUsername");
+		int userId = (int) session.getAttribute("sUserId");
 		String title = request.getParameter("title");
 		String description = request.getParameter("description");
 		String filepath = "img/" + request.getParameter("file");
 		String privacy = request.getParameter("selector");
-		String date = "";
 		String[] tags = request.getParameter("tags").split(", +");
 		String[] allowedUsers = request.getParameter("allowed").split(", +");
-		// new Photo(username, title, description, filepath, privacy, date)
-
-		Photo p = new Photo(username, title, description, filepath, privacy, date);
+		User user = UserService.getUser(userId);
+		Photo p = new Photo(user, title, description, filepath, privacy);
 
 		for (String t : tags) {
 			p.addTag(t);
 		}
 
-		for (String u : allowedUsers) {
+		for (String s : allowedUsers) {
+			User u = UserService.getUser(s);
 			p.addAllowedUser(u);
 		}
 
 		PhotoService.addPhoto(p);
 
-		List<Photo> photoList = PhotoService.getAllMyPhotos(username);
-		request.setAttribute("photoList", photoList);
+		List<Photo> photoList = PhotoService.getAllMyPhotos(userId);
+		request.setAttribute("photoList", new Gson().toJson(photoList));
 		
-		request.setAttribute("username", username);
-		request.setAttribute("description", UserService.getUserDescription(username));
+		request.setAttribute("username", user.getUsername());
+		request.setAttribute("description", user.getDescription());
 
 		RequestDispatcher rd = request.getRequestDispatcher("userpage.jsp");
 		rd.forward(request, response);
@@ -207,13 +210,13 @@ public class PhotoController extends HttpServlet {
 		String username = ((String) session.getAttribute("sUsername")).toLowerCase();
 
 		Photo p = PhotoService.getPhoto(photoId);
-		response.setContentType("text/plain");
-		if (!p.getAllowedUsers().contains(username) && p.getPrivacy().equals("private")
-				&& !p.getUsername().equals(username)) {
+		response.setContentType("application/json");
+		if (!p.containInList(p.getAllowedUsers(), UserService.getUser(username)) && p.getPrivacy().equals("private")
+				&& !p.getUser().getUsername().equals(username)) {
 			p = null;
 			response.getWriter().write("null");
 		} else
-			response.getWriter().write(p.toString());
+			response.getWriter().write(new Gson().toJson(p));
 	}
 
 	private void tagPhoto(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -243,22 +246,22 @@ public class PhotoController extends HttpServlet {
 
 		if (role.equals("user")) {
 			String username = (String) session.getAttribute("sUsername");
-			List<Photo> publicPhotoList = PhotoService.getPublicPhotosByTag(keyword);
-			request.setAttribute("publicPhotoList", publicPhotoList);
+			List<Photo> publicPhotoList = PhotoService.getAllPublicPhotosByTag(keyword);
+			request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
 
-			List<Photo> sharedPhotoList = PhotoService.getSharedPhotosByTag(keyword, username);
-			request.setAttribute("sharedPhotoList", sharedPhotoList);
+			List<Photo> sharedPhotoList = PhotoService.getAllSharedPhotosByTag(keyword, username);
+			request.setAttribute("sharedPhotoList", new Gson().toJson(sharedPhotoList));
 
-			List<Photo> myPhotoList = PhotoService.getMyPhotosByTag(keyword, username);
-			request.setAttribute("myPhotoList", myPhotoList);
+			List<Photo> myPhotoList = PhotoService.getAllMyPhotosByTag(keyword, username);
+			request.setAttribute("myPhotoList", new Gson().toJson(myPhotoList));
 
 			System.out.println("SEARCHING AS USER...");
 			// forward to success page or page if success
 			RequestDispatcher rd = request.getRequestDispatcher("search.jsp");
 			rd.forward(request, response);
 		} else {
-			List<Photo> publicPhotoList = PhotoService.getPublicPhotosByTag(keyword);
-			request.setAttribute("publicPhotoList", publicPhotoList);
+			List<Photo> publicPhotoList = PhotoService.getAllPublicPhotosByTag(keyword);
+			request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
 			request.setAttribute("sharedPhotoList", "[]");
 			request.setAttribute("myPhotoList", "[]");
 			System.out.println("SEARCHING AS GUEST...");
@@ -269,21 +272,22 @@ public class PhotoController extends HttpServlet {
 	}
 
 	private void showPhoto(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		System.out.println(request.getParameterNames());
 		HttpSession session = request.getSession();
 		String role = (String) session.getAttribute("role");
 		if (role.equals("user")) {
 			String username = (String) session.getAttribute("sUsername");
 			List<Photo> publicPhotoList = PhotoService.getAllPublicPhotos();
-			request.setAttribute("publicPhotoList", publicPhotoList);
+			request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
 
 			List<Photo> sharedPhotoList = PhotoService.getAllSharedPhotos(username);
-			request.setAttribute("sharedPhotoList", sharedPhotoList);
+			request.setAttribute("sharedPhotoList", new Gson().toJson(sharedPhotoList));
 
 			request.setAttribute("role", "user");
 		}
 		else {
 			List<Photo> publicPhotoList = PhotoService.getAllPublicPhotos();
-			request.setAttribute("publicPhotoList", publicPhotoList);
+			request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
 
 			request.setAttribute("sharedPhotoList", "[]");
 
