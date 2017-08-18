@@ -8,11 +8,146 @@
                 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
                 <script src="jquery-3.2.1.min.js"></script>
-                <link rel = "stylesheet" href = "stylesheet.css">
+                <script src="jquery-ui.min.js"></script>
+				<link rel="stylesheet" runat="server" href="stylesheet.css">
+				<link rel="stylesheet" href="jquery-ui.css">
+				<style>
+				ul.ui-autocomplete {
+				  width: 240px !important;
+				  background-color: whitesmoke;
+				  margin-left: 1em;
+				  border-style: solid;
+				}
+				.ui-autocomplete { 
+					position: fixed; 
+					cursor: default;
+					z-index:30 !important;
+					max-height: 100px;
+					overflow-y: auto;
+					/* prevent horizontal scrollbar */
+					overflow-x: hidden;
+					/* add padding to account for vertical scrollbar */
+					padding-right: 20px;
+					line-height: 2;
+				}  
+				.ui-menu-item {
+				  display: block;
+				  width: 240px;
+				  height: 30px;
+				  color: #424242;
+				}
+				.ui-menu-item-wrapper {
+					height: 30px;
+				}
+				#advsearch{
+	position:fixed;
+	width:240px;
+	height:25px;
+	background-color:whitesmoke;
+	color:cornflowerblue;
+	line-height:2;
+	margin-left:10px;
+	z-index:1000;
+	padding-left:3px;
+	padding-right:17px; 
+	border:1px solid #C5C5C6;
+	font-size: .75em;
+}
+#advsearch : hover {
+	cursor:pointer;
+	text-decoration:underline;
+}
+				</style>
             <script>
                 var photos_cnt = 0;
                 var numViewPhoto = 4;
+				
+                var isAdvancedUpload = function() {
+                    var div = document.createElement( 'div' );
+                    
+                    if( ( ( 'draggable' in div ) || ( 'ondragstart' in div && 'ondrop' in div ) ) && 'FormData' in window && 'FileReader' in window)
+                        console.log("is advanced upload");
+                    else console.log("not advanced upload");
+                    
+                    return ( ( 'draggable' in div ) || ( 'ondragstart' in div && 'ondrop' in div ) ) && 'FormData' in window && 'FileReader' in window;
+                }();
+                    var picForms = [];
+                    var picCount = 0;
 
+                    // applying the effect for every form
+
+                    function uploadFile (file) {
+                        var fileList = document.getElementById("file-list");
+                        console.log("FILELIST: " + fileList);
+                        
+                        var li = document.createElement("li"),
+                        div = document.createElement("div"),
+                        img,
+                        reader,
+                        fileInfo = document.createElement("span");
+
+                        li.setAttribute("data-file-count", picCount);
+                        picCount++;
+                        var remove = document.createElement("span");
+                        remove.setAttribute("id", "remove-file");
+                        remove.innerHTML += "<i class=\"fa fa-times\" aria-hidden=\"true\"></i>";
+
+                        li.appendChild(div);
+
+                        if (typeof FileReader !== "undefined" && (/image/i).test(file.type)) {
+                            img = document.createElement("img");
+                            div.appendChild(img);
+                            reader = new FileReader();
+                            reader.onload = (function (theImg) {
+                                return function (evt) {
+                                    theImg.src = evt.target.result;
+                                };
+                            }(img));
+                            reader.readAsDataURL(file);
+                        }
+                            
+                        // Present file info and append it to the list of files
+                        fileInfo.textContent = file.name;
+                        div.appendChild(fileInfo);
+                        div.appendChild(remove);
+                            
+                        fileList.appendChild(li);
+                    }
+
+                    function traverseFiles(droppedFiles) {
+                        if (typeof droppedFiles !== "undefined") {
+                            var $photoInfo;
+                            for(var i = 0; i < droppedFiles.length; i++) {
+                                console.log("UPLOADED: " + droppedFiles[i].name);
+                                console.log("\tTYPE: " + droppedFiles[i].type);
+                                uploadFile(droppedFiles[i]);
+                                $photoInfo = $("#info-container").clone();
+
+                                $photoInfo.children()[0].textContent = droppedFiles[i].name;
+                                $photoInfo.attr("id", "");
+                                picForms.push($photoInfo);
+                                console.log("picForms size: " + picForms.length);
+                                console.log($photoInfo.children());
+
+                                $photoInfo.children()[1][0].defaultValue = droppedFiles[i].name.split( '.' )[0];
+                            }
+
+                            if($("#file-list").children().length > 0) {
+                                $("#drop-container").css('display', 'none');
+                                $("#photo-container").css('display', 'inline-block');
+                                $("#info-container").css('display', 'inline-block');
+
+                                // change bg color of selected list
+                                $($("#file-list").children()[0]).addClass("list-selected");
+                                $("#info-container").replaceWith(picForms[0]);
+
+                                // replace info container
+                                $(picForms[0]).attr("id", "info-container");
+                                $("#info-container").css('display', 'inline-block');
+                            }
+                        }
+                    }
+                
                 function showPhoto(p) {
                 	var a_photo = document.createElement("a");
                 	a_photo.textContent = "";
@@ -193,6 +328,14 @@
                     document.title = "${username}";
                     
                     history.replaceState('', document.title, "http://localhost:8080/WEBAPDE-MP3/userpage?userId=${sessionScope.sUserId}");
+                }
+                
+                function myFocusFunction() {
+                	$("#search-results").css("display", "block");  
+                }
+
+                function myBlurFunction() {
+                	$("#search-results").css("display", "none");
                 }
 
                 $(document).ready(function(){
@@ -482,8 +625,9 @@
                         var modaladdphoto2 = document.getElementById("modal-add-photo-container-2");
                         var modalcreg = document.getElementById("modal-reg-container");
                         var modalcreg2 = document.getElementById("modal-reg-container-2");
+                        var modals = document.getElementById("modal-sear");
 
-                        if(event.target == modalc2 || event.target == modalc || event.target == modallog || event.target == modalclog || event.target == modalc2log || event.target == modaladdphoto || event.target == modaladdphoto2 || event.target == modalcreg || event.target == modalcreg2) {
+                        if(event.target == modals || event.target == modalc2 || event.target == modalc || event.target == modallog || event.target == modalclog || event.target == modalc2log || event.target == modaladdphoto || event.target == modaladdphoto2 || event.target == modalcreg || event.target == modalcreg2) {
                             closeModal();
                             window.location.hash = "";
                             document.title = "${username} | Oink";
@@ -717,6 +861,104 @@
 	                    }
                         return b;
                     });
+                    
+                    $( "#tagsearch" ).autocomplete({
+                        source: ${tagnames},
+                        open : function(){
+                            $(".ui-autocomplete:visible").css({top:"+=30",left:"+=10"});
+                        },
+                        appendTo : "#search-results"
+                    });
+                    
+                    $(document).on("click", "#file-list li", function(){
+                        var listChildren = $("#file-list").children();
+                        var index = parseInt($(event.target).closest('li').attr("data-file-count"));
+                        for(i = 0; i < listChildren.length; i++) {
+                            if($(listChildren[i]).hasClass("list-selected")) {
+                                $(listChildren[i]).removeClass("list-selected");
+                            }
+                        }
+
+                        // change bg color of selected list
+                        $(event.target).closest('li').addClass("list-selected");
+                        $("#info-container").replaceWith(picForms[index]);
+
+                        // replace info container
+                        $(picForms[index]).attr("id", "info-container");
+                        $("#info-container").css('display', 'inline-block');
+                    });
+
+                    
+                    $( '.box' ).each( function() {
+                        console.log(".box each yo");
+                        var $form        = $( this ),
+                        $input       = $form.find( 'input[type="file"]' ),
+                        $label       = $form.find( 'label' ),
+                        droppedFiles = false,
+                        showFiles    = function( files ) {
+                            //$label.text( files.length > 1 ? ( $input.attr( 'data-multiple-caption' ) || '' ).replace( '{count}', files.length ) : files[ 0 ].name );
+                        };
+
+                        // letting the server side to know we are going to make an Ajax request
+                        $form.append( '<input type="hidden" name="ajax" value="1" />' );
+
+                        // when the upload button is clicked
+                        $input.on( 'change', function( e ) {
+                            var fileList = document.getElementById("file-list");
+                            droppedFiles = this.files;
+
+                            console.log("BEFORE FILE LIST LENGTH: " + $("#file-list").children().length);
+                            showFiles( e.target.files );
+
+                            // DEBUGGING ::: information about the files uploaded
+                            console.log(this.files);
+                            console.log(e.target.value);
+                            console.log(e.target.value.split( '\\' ).pop());
+                            
+                            // Display uploaded files in photoContainer
+                            traverseFiles(droppedFiles);
+                            console.log("AFTER FILE LIST LENGTH: " + $("#file-list").children().length);
+
+                            // If there at least one photo uploaded, remove the drop container
+                            if($("#file-list").children().length > 0) {
+                                $("#drop-container").css('display', 'none');
+                                $("#photo-container").css('display', 'inline-block');
+                                $("#info-container").css('display', 'inline-block');
+                            }
+                        });
+
+
+                        // drag&drop files if the feature is available
+                        if( isAdvancedUpload ) {
+                            $form
+                            .addClass( 'has-advanced-upload' ) // letting the CSS part to know drag&drop is supported by the browser
+                            .on( 'drag dragstart dragend dragover dragenter dragleave drop', function( e ) {
+                                console.log("onadvancedupload");
+                                e.preventDefault();
+                                e.stopPropagation();
+                            })
+                            .on( 'dragover dragenter', function() //
+                            {
+                                $form.addClass( 'is-dragover' );
+                            })
+                            .on( 'dragleave dragend drop', function()
+                            {
+                                $form.removeClass( 'is-dragover' );
+                            })
+                            .on( 'drop', function( e )
+                            {
+                                console.log("dropped files");
+                                droppedFiles = e.originalEvent.dataTransfer.files; // the files that were dropped
+                                showFiles( droppedFiles );
+
+                                console.log(droppedFiles);
+                                traverseFiles(droppedFiles);
+                                // file names
+                                
+                            });
+                        }
+
+                    });
                 });
 
 
@@ -724,7 +966,7 @@
             </head>
 
         <body>
-            <div id="header">
+		<div id="header">
 		<div id="hleft">
 			<a id="hlogo" href="homepage">OINK</a>
 		</div>
@@ -732,7 +974,9 @@
 		<div id="hright">
 			<form action="search" method="get" class="index-search-form" name="">
 				<input name="keyword" type="text"
-					placeholder="What are you looking for?">
+					placeholder="What are you looking for?" id="tagsearch" onfocus="myFocusFunction()" onfocusout="myBlurFunction()">
+				<div id="search-results" style="position:fixed;display:none;"><div id="advsearch">Advanced Search</div></div>
+				<input type="hidden" value="NONE"> </input>
 				<button class="" type="submit">
 					<i class="fa fa-search" aria-hidden="true"></i>
 				</button>
@@ -859,41 +1103,49 @@
 
                 <div id="modal-add-photo" class="modal">
 
-                    <span class="close" >&times;</span>
-                    <div id="modal-add-photo-container">
-                        <div id="modal-add-photo-container-2">
-                            <div id="modal-add-photo-content">
-                                <h3>Upload photo</h3>
-                                <form action="upload" method="post" id="form-upload">
+                <span class="close" >&times;</span>
+                <div id="modal-add-photo-container">
+                    <div id="modal-add-photo-container-2">
+                        <div id="inline-container" class="box">
+
+                            <div id="photo-container">
+                                <ul id="file-list">
+                                    
+                                </ul>
+                            </div>
+                            <div id="info-container">
+                                <h1>H1</h1>
+                                <form action="" id="form-upload">
                                     <input type="text" name="title" placeholder="Title"><br>
-                                    <input type="text" name="tags" placeholder="Tags (comma-separated, ex. tag1, tag2)"><br>
+                                    <input type="text" name="tag" placeholder="Tags (comma-separated, ex. tag1, tag2)"><br>
                                     <textarea rows="3" name="description" placeholder="Short description about the photo"></textarea><br>
-                                    <input type="file" name="file" id="file" accept=".jpg, .png, .tiff" class="pic-input" />
-                                    <label for="file"><span><i class="fa fa-upload" aria-hidden="true"></i> Choose a file...</label></span><br>
-									<p class="form-error">Title needed.</p>
-                                    <ul>
-                                        <li>
-                                            <input type="radio" id="f-option" name="selector" class="pic-security" value="public" checked="checked">
-                                            <label for="f-option">Public</label>
-                                            <div class="check"></div>
-                                        </li>
-
-                                        <li>
-                                            <input type="radio" id="s-option" name="selector" class="pic-security" value="private">
-                                            <label for="s-option">Private</label>
-                                            <div class="check"><div class="inside"></div></div>
-                                        </li>
+                                    <ul class="switch-ul">
+                                        <label class="switch">
+                                            <input type="checkbox" name="selector" class="pic-security" id="toggle-private">
+                                            <span class="slider round"></span>
+                                            <span class="labeltext">Set to private</span>
+                                        </label>
                                     </ul>
-                                    <input type="text" name="allowed" placeholder="Allowed users (ex. user1, user2)" id="pic-allowed-user"><br>
+                                    <input type="text" name="tag" placeholder="Allowed users (ex. user1, user2)" id="pic-allowed-user"><br>
 
-
-                                    <input type="submit" value="Upload" id="submit-upload">
                                 </form>
                             </div>
+                            <div id="drop-container">
+                                <p id="drop-area">
+                                    <h2><span class="drop-instructions">Drag your image here!</span></h2>
+                                </p>
+                                
+                                <form method="post" id="form-upload" name="form-upload" >
+                                    <label class="upload" for="files-upload" id="">Or upload a file</label>
+                                    <input id="files-upload" type="file" data-multiple-caption="{count} files selected" accept=".jpg, .png, .tiff" class="pic-input" multiple >
+                                </form>
+                            </div>
+
                         </div>
                     </div>
-
                 </div>
+
+            </div>
 
                 <div id="footer">
                     <div id="viewmore">

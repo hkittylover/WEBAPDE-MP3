@@ -20,7 +20,7 @@ ul.ui-autocomplete {
   border-style: solid;
 }
 .ui-autocomplete { 
-	position: absolute; 
+	position: fixed; 
 	cursor: default;
 	z-index:30 !important;
 	max-height: 100px;
@@ -29,13 +29,34 @@ ul.ui-autocomplete {
 	overflow-x: hidden;
 	/* add padding to account for vertical scrollbar */
 	padding-right: 20px;
-     }  
+	line-height: 2;
+}  
 .ui-menu-item {
   display: block;
   width: 240px;
   height: 30px;
-  padding: 2px auto;
   color: #424242;
+}
+.ui-menu-item-wrapper {
+	height: 30px;
+}
+#advsearch{
+	position:fixed;
+	width:240px;
+	height:25px;
+	background-color:whitesmoke;
+	color:cornflowerblue;
+	line-height:2;
+	margin-left:10px;
+	z-index:1000;
+	padding-left:3px;
+	padding-right:17px; 
+	border:1px solid #C5C5C6;
+	font-size: .75em;
+}
+#advsearch : hover {
+	cursor:pointer;
+	text-decoration:underline;
 }
 </style>
 <script>
@@ -186,7 +207,9 @@ ul.ui-autocomplete {
                     for(i = 0; i < p.tags.length; i++) {
                         new_img_tag.push(document.createElement("div"));
                         new_img_tag[i].className = "imgtag";
-                        new_img_tag[i].textContent = "#" + p.tags[i].tagname;
+                        new_img_tag[i].innerHTML = "#" + p.tags[i].tagname + "<span class=\"remove-tag\" style=\"margin-left: 8px;\"><i class=\"fa fa-times\" id=\"fa-timestag\" aria-hidden=\"true\" data-photoId = \"" + p.photoId + "\" data-tagname=\"" + p.tags[i].tagname + "\"></i></span>";
+                        new_img_tag[i].setAttribute("data-tagname", p.tags[i].tagname);
+                        new_img_tag[i].setAttribute("data-photoId", p.photoId);
                         $("#imgcontainer2").append(new_img_tag[i]);
                     }
                     modal_thing.style.display = "table";
@@ -239,9 +262,17 @@ ul.ui-autocomplete {
 					modalad.style.display = 'none';
                     history.replaceState('', document.title, "http://localhost:8080/WEBAPDE-MP3/homepage");
                 }
+				
+                function myFocusFunction() {
+                	$("#search-results").css("display", "block");  
+                }
 
+                function myBlurFunction() {
+                	$("#search-results").css("display", "none");
+                }
+                
                 $(document).ready(function () {
-                    
+                	
                     var search = window.location.search.split('&')[0].split("=")[1];
                     history.replaceState('', document.title, "http://localhost:8080/WEBAPDE-MP3/homepage");
                     var role = "${sessionScope.role}";
@@ -375,6 +406,31 @@ ul.ui-autocomplete {
                             $img_span.text("");
                             $img_span.css({marginLeft:"0px"});
                         });
+                    });
+                    
+                    $(document).on("click", ".fa-times#fa-timestag", function() {
+                    	var tagname = $(this).attr("data-tagname");
+                    	var photoId = $(this).attr("data-photoId");
+                    	if(confirm("Do you want to delete the \"" + tagname + "\" tag?")) {
+	                    	$.ajax({
+	            				"url" : "deletetag",
+	            				"method" : "POST",
+	            				"success" : function(result) {
+	            					console.log(result);
+	                                if(result == "true") {
+	                                	$("div.imgtag[data-tagname=" + tagname + "]").remove();
+	                                }
+	                                else {
+	                                    alert("Delete Tag Failed");
+	                                }
+	            					
+	            				},
+	            				"data" : {
+	            					"photoId" : photoId,
+	            					"tagname" : tagname
+	            				}
+	            			});
+                    	}
                     });
 
                     $(document).on("click", ".imgtag#addtag", function() {
@@ -705,18 +761,22 @@ ul.ui-autocomplete {
                         console.log(ajx);
                         return b;
                     });
-                    var tagnames=["<a href="">Search for</a>"];
-                    tagnames.concat(${tagnames});
                     $( "#tagsearch" ).autocomplete({
-                        source: tagnames,
+                        source: ${tagnames},
                         open : function(){
-                            $(".ui-autocomplete:visible").css({top:"+=0",left:"+=10"});
-                        }
+                            $(".ui-autocomplete:visible").css({top:"+=30",left:"+=10"});
+                        },
+                        appendTo : "#search-results"
                     });
-                    $(document).on("click", ".fa-times", function() {
-                        alert("REMOVE TAG");
+                    /*
+                    $("#tagsearch").focusin(function(){
+                        $("#search-result1").css("display", "block");
                     });
+                    $("#tagsearch").focusout(function(){
+                        $("#search-result1").css("display", "none");
+                    });*/
                 });
+                
             </script>
 <title>Oink</title>
 </head>
@@ -729,7 +789,8 @@ ul.ui-autocomplete {
 		<div id="hright">
 			<form action="search" method="get" class="index-search-form" name="">
 				<input name="keyword" type="text"
-					placeholder="What are you looking for?" id="tagsearch">
+					placeholder="What are you looking for?" id="tagsearch" onfocus="myFocusFunction()" onfocusout="myBlurFunction()">
+				<div id="search-results" style="position:fixed;display:none;"><div id="advsearch">Advanced Search</div></div>
 				<input type="hidden" value="NONE"> </input>
 				<button class="" type="submit">
 					<i class="fa fa-search" aria-hidden="true"></i>

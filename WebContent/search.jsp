@@ -8,7 +8,56 @@
             <title></title>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
             <script src="jquery-3.2.1.min.js"></script>
-            <link rel = "stylesheet" href = "stylesheet.css">
+            <script src="jquery-ui.min.js"></script>
+			<link rel="stylesheet" runat="server" href="stylesheet.css">
+			<link rel="stylesheet" href="jquery-ui.css">
+			<style>
+			ul.ui-autocomplete {
+			  width: 240px !important;
+			  background-color: whitesmoke;
+			  margin-left: 1em;
+			  border-style: solid;
+			}
+			.ui-autocomplete { 
+				position: fixed; 
+				cursor: default;
+				z-index:30 !important;
+				max-height: 100px;
+				overflow-y: auto;
+				/* prevent horizontal scrollbar */
+				overflow-x: hidden;
+				/* add padding to account for vertical scrollbar */
+				padding-right: 20px;
+				line-height: 2;
+			}  
+			.ui-menu-item {
+			  display: block;
+			  width: 240px;
+			  height: 30px;
+			  color: #424242;
+			}
+			.ui-menu-item-wrapper {
+				height: 30px;
+			}
+			#advsearch{
+	position:fixed;
+	width:240px;
+	height:25px;
+	background-color:whitesmoke;
+	color:cornflowerblue;
+	line-height:2;
+	margin-left:10px;
+	z-index:1000;
+	padding-left:3px;
+	padding-right:17px; 
+	border:1px solid #C5C5C6;
+	font-size: .75em;
+}
+#advsearch : hover {
+	cursor:pointer;
+	text-decoration:underline;
+}
+			</style>
 
             <script>
                 var public_photos_cnt = 0;
@@ -203,7 +252,9 @@
                     for(i = 0; i < p.tags.length; i++) {
                         new_img_tag.push(document.createElement("div"));
                         new_img_tag[i].className = "imgtag";
-                        new_img_tag[i].textContent = "#" + p.tags[i].tagname;
+                        new_img_tag[i].innerHTML = "#" + p.tags[i].tagname + "<span class=\"remove-tag\" style=\"margin-left: 8px;\"><i class=\"fa fa-times\" id=\"fa-timestag\" aria-hidden=\"true\" data-photoId = \"" + p.photoId + "\" data-tagname=\"" + p.tags[i].tagname + "\"></i></span>";
+                        new_img_tag[i].setAttribute("data-tagname", p.tags[i].tagname);
+                        new_img_tag[i].setAttribute("data-photoId", p.photoId);
                         $("#imgcontainer2").append(new_img_tag[i]);
                     }
                     modal_thing.style.display = "table";
@@ -246,6 +297,14 @@
                     document.title = "Search results for ${keyword}";
                     
                     history.replaceState('', document.title, "http://localhost:8080/WEBAPDE-MP3/search?keyword=${keyword}");
+                }
+                
+                function myFocusFunction() {
+                	$("#search-results").css("display", "block");  
+                }
+
+                function myBlurFunction() {
+                	$("#search-results").css("display", "none");
                 }
 
                 $(document).ready(function () {
@@ -375,6 +434,31 @@
                             $img_span.text("");
                             $img_span.css({marginLeft:"0px"});
                         });
+                    });
+                    
+                    $(document).on("click", ".fa-times#fa-timestag", function() {
+                    	var tagname = $(this).attr("data-tagname");
+                    	var photoId = $(this).attr("data-photoId");
+                    	if(confirm("Do you want to delete the \"" + tagname + "\" tag?")) {
+	                    	$.ajax({
+	            				"url" : "deletetag",
+	            				"method" : "POST",
+	            				"success" : function(result) {
+	            					console.log(result);
+	                                if(result == "true") {
+	                                	$("div.imgtag[data-tagname=" + tagname + "]").remove();
+	                                }
+	                                else {
+	                                    alert("Delete Tag Failed");
+	                                }
+	            					
+	            				},
+	            				"data" : {
+	            					"photoId" : photoId,
+	            					"tagname" : tagname
+	            				}
+	            			});
+                    	}
                     });
 
                     $(document).on("click", ".imgtag#addtag", function() {
@@ -519,8 +603,9 @@
                         //var modaladdphoto2 = document.getElementById("modal-add-photo-container-2");
                         var modalcreg = document.getElementById("modal-reg-container");
                         var modalcreg2 = document.getElementById("modal-reg-container-2");
+                        var modals = document.getElementById("modal-sear");
 
-                        if(event.target == modalc2 || event.target == modalc || event.target == modallog || event.target == modalclog || event.target == modalc2log || event.target == modalcreg || event.target == modalcreg2) {
+                        if(event.target == modals || event.target == modalc2 || event.target == modalc || event.target == modallog || event.target == modalclog || event.target == modalc2log || event.target == modalcreg || event.target == modalcreg2) {
                             closeModal();
                             window.location.hash = "";
                             document.title = "Oink";
@@ -661,6 +746,13 @@
                         
                         return b;
                     });
+                    $( "#tagsearch" ).autocomplete({
+                        source: ${tagnames},
+                        open : function(){
+                            $(".ui-autocomplete:visible").css({top:"+=30",left:"+=10"});
+                        },
+                        appendTo : "#search-results"
+                    });
                 });
 
             </script>
@@ -668,29 +760,32 @@
         </head>
         <body>
             <div id="header">
-                <div id="hleft">
-                    <a id="hlogo" href="homepage">OINK</a>
-                </div>
-                <div id="hright">
-					<form action="search" method="get" class="index-search-form" name="">
-						<input name="keyword" type="text"
-							placeholder="What are you looking for?">
-						<button class="" type="submit">
-							<i class="fa fa-search" aria-hidden="true"></i>
-						</button>
-					</form>
-					<c:choose>
-		   				<c:when test="${sessionScope.role == 'user'}">
-							<a class="hlink" id="profile" href="userpage?userId=${sessionScope.sUserId}">${sessionScope.sUsername}</a>
-							<a class="hlink" id="hlink_logout" href="logout">Logout</a>
-						</c:when>
-						<c:otherwise>
-							<a class="hlink" id="hlink_login" href="login">Login</a> 
-							<a class="hlink" id="hlink_reg" href="register">Register</a> 
-						</c:otherwise>
-					</c:choose>
-				</div>
-            </div>
+		<div id="hleft">
+			<a id="hlogo" href="homepage">OINK</a>
+		</div>
+
+		<div id="hright">
+			<form action="search" method="get" class="index-search-form" name="">
+				<input name="keyword" type="text"
+					placeholder="What are you looking for?" id="tagsearch" onfocus="myFocusFunction()" onfocusout="myBlurFunction()">
+				<div id="search-results" style="position:fixed;display:none;"><div id="advsearch">Advanced Search</div></div>
+				<input type="hidden" value="NONE"> </input>
+				<button class="" type="submit">
+					<i class="fa fa-search" aria-hidden="true"></i>
+				</button>
+			</form>
+			<c:choose>
+   				<c:when test="${sessionScope.role == 'user'}">
+					<a class="hlink" id="profile" href="userpage?userId=${sessionScope.sUserId}">${sessionScope.sUsername}</a>
+					<a class="hlink" id="hlink_logout" href="logout">Logout</a>
+				</c:when>
+				<c:otherwise>
+					<a class="hlink" id="hlink_login" href="login">Login</a> 
+					<a class="hlink" id="hlink_reg" href="register">Register</a> 
+				</c:otherwise>
+			</c:choose>
+		</div>
+	</div>
 
 
             <div id="bodypanel">
