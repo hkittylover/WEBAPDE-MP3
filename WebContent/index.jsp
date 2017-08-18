@@ -10,7 +10,7 @@
 	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="jquery-3.2.1.min.js"></script>
 <script src="jquery-ui.min.js"></script>
-<link rel="stylesheet" href="stylesheet.css">
+<link rel="stylesheet" runat="server" href="stylesheet.css">
 <link rel="stylesheet" href="jquery-ui.css">
 <style>
 ul.ui-autocomplete {
@@ -562,8 +562,9 @@ ul.ui-autocomplete {
                         var modalcreg = document.getElementById("modal-reg-container");
                         var modalcreg2 = document.getElementById("modal-reg-container-2");
                         var modalcad = document.getElementById("modal-access-deny");
+                        var modals = document.getElementById("modal-sear");
 
-                        if(event.target == modalcad || event.target == modalc2 || event.target == modalc || event.target == modallog || event.target == modalclog || event.target == modalc2log || event.target == modalcreg || event.target == modalcreg2) {
+                        if(event.target == modals || event.target == modalcad || event.target == modalc2 || event.target == modalc || event.target == modallog || event.target == modalclog || event.target == modalc2log || event.target == modalcreg || event.target == modalcreg2) {
                             closeModal();
                             window.location.hash = "";
                             document.title = "Oink";
@@ -704,8 +705,10 @@ ul.ui-autocomplete {
                         console.log(ajx);
                         return b;
                     });
+                    var tagnames=["<a href="">Search for</a>"];
+                    tagnames.concat(${tagnames});
                     $( "#tagsearch" ).autocomplete({
-                        source: ${tagnames},
+                        source: tagnames,
                         open : function(){
                             $(".ui-autocomplete:visible").css({top:"+=0",left:"+=10"});
                         }
@@ -725,8 +728,9 @@ ul.ui-autocomplete {
 
 		<div id="hright">
 			<form action="search" method="get" class="index-search-form" name="">
-				<input name="keyword" type="text" title="type &quot;a&quot;"
+				<input name="keyword" type="text"
 					placeholder="What are you looking for?" id="tagsearch">
+				<input type="hidden" value="NONE"> </input>
 				<button class="" type="submit">
 					<i class="fa fa-search" aria-hidden="true"></i>
 				</button>
@@ -864,7 +868,28 @@ ul.ui-autocomplete {
 			</div>
 	
 		</div>
+		<div id="modal-sear" class="modal">
+             <span class="close" >&times;</span>
+             <div id="modal-sear-container">
+                 <div id="modal-sear-container-2">
+                     <div id="modal-sear-content">
+                         <h3>Advanced Search</h3>
+                         <form action="search" method="get" id="form-sear">
+                             <label>Search for</label><br>
+                             <input type="text" name="keyword" placeholder="keyword"><br>
+                             <select name="ACTION">
+                                 <option value="AND">AND</option>
+                                 <option value="OR">OR</option>
+                                 <option value="AND NOT">AND NOT</option>
+                             </select><br>
+                             <input type="text" name="keyword2" placeholder="keyword"><br>
 
+                             <input type="submit" value="Search" id="submit-search">
+                         </form>
+                     </div>
+                 </div>
+             </div>
+         </div>
 
 
 

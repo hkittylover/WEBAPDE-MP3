@@ -640,7 +640,7 @@ h5 {
 	height: 400px;
 }
 
-#modal-login-container, #modal-add-photo-container, #modal-reg-container
+#modal-login-container, #modal-add-photo-container, #modal-reg-container, #modal-sear-container
 	{
 	padding: 0;
 	vertical-align: middle;
@@ -651,14 +651,14 @@ h5 {
 }
 
 #modal-login-container-2, #modal-add-photo-container-2,
-	#modal-reg-container-2 {
+	#modal-reg-container-2, #modal-sear-container-2 {
 	margin: 0 auto;
 	text-align: center;
 	padding: 10px;
 	overflow: hidden;
 }
 
-#modal-login-content, #modal-add-photo-content, #modal-reg-content {
+#modal-login-content, #modal-add-photo-content, #modal-reg-content, #modal-sear-content {
 	background-color: white;
 	display: inline-block;
 	min-width: 350px;
@@ -673,7 +673,7 @@ h5 {
 	padding-bottom: 45px;
 }
 
-#modal-login-content h3, #modal-add-photo-content h3, #modal-reg-content h3
+#modal-login-content h3, #modal-add-photo-content h3, #modal-reg-content h3, #modal-sear-content h3
 	{
 	padding-bottom: 10px;
 	font-family: "Oswald", sans-serif;
@@ -962,6 +962,19 @@ input[type=radio]:checked ~ label {
     font-size: 1.5em;
     padding-top: 150px;
     color:darkslategrey;
+}
+
+#tagsearch input {
+	position: absolute;
+}
+
+#advsearch {
+	position: relative;
+	width: 240px;
+	height: 20px;
+	margin-left:8px;
+	background-color: whitesmoke;
+	font-size: 1em;
 }
 
 /* 
