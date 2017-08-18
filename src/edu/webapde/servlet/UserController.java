@@ -62,6 +62,10 @@ public class UserController extends HttpServlet {
 			checkRole(request, response);
 		}
 		request.setAttribute("action", "none");
+		List<String> tags = TagService.getAllTagnames();
+		request.setAttribute("tagnames", new Gson().toJson(tags));
+		List<String> users = UserService.getAllUsername();
+		request.setAttribute("usernames", new Gson().toJson(users));
 		switch (urlPattern) {
 		case "/homepage":
 			request.setAttribute("action", "homepage");
@@ -173,8 +177,7 @@ public class UserController extends HttpServlet {
 			List<Photo> sharedPhotoList = PhotoService.getAllSharedPhotos(username);
 			request.setAttribute("sharedPhotoList", new Gson().toJson(sharedPhotoList));
 			
-			List<String> tags = TagService.getAllTagnames();
-			request.setAttribute("tagnames", new Gson().toJson(tags));
+			
 			
 			System.out.println("LOGGED IN");
 			// forward to success page or page if success

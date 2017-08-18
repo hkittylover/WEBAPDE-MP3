@@ -164,7 +164,7 @@ public class PhotoService {
 
 		try {
 			trans.begin();
-			Query q = em.createNativeQuery("SELECT * FROM photos p WHERE privacy = 'public' ORDER BY p.photoId DESC;",
+			Query q = em.createNativeQuery("SELECT * FROM photos p WHERE privacy = 'public' GROUP BY p.photoId ORDER BY p.photoId DESC;",
 					Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
@@ -190,7 +190,7 @@ public class PhotoService {
 			trans.begin();
 			Query q = em.createNativeQuery(
 					"SELECT * FROM photos p, alloweduser au WHERE p.photoId = au.photoId AND au.userId = " + userId
-							+ " ORDER BY p.photoId DESC;",
+							+ " GROUP BY p.photoId ORDER BY p.photoId DESC;",
 					Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
@@ -216,7 +216,7 @@ public class PhotoService {
 			trans.begin();
 			Query q = em.createNativeQuery(
 					"SELECT * FROM photos p, alloweduser au, users u WHERE p.photoId = au.photoId AND au.userId = u.userId AND u.username = '"
-							+ username + "' ORDER BY p.photoId DESC;",
+							+ username + "' GROUP BY p.photoId ORDER BY p.photoId DESC;",
 					Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
@@ -241,7 +241,7 @@ public class PhotoService {
 		try {
 			trans.begin();
 			Query q = em.createNativeQuery(
-					"SELECT * FROM photos p WHERE p.userId = " + userId + " ORDER BY p.photoId DESC;", Photo.class);
+					"SELECT * FROM photos p WHERE p.userId = " + userId + " GROUP BY p.photoId ORDER BY p.photoId DESC;", Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
 			System.out.println("Result from getAllMyPhotos(): " + photoList);
@@ -265,7 +265,7 @@ public class PhotoService {
 		try {
 			trans.begin();
 			Query q = em.createNativeQuery("SELECT * FROM photos p, users u WHERE p.userId = u.userId AND u.username = '"
-					+ username + "' ORDER BY p.photoId DESC;", Photo.class);
+					+ username + "' GROUP BY p.photoId ORDER BY p.photoId DESC;", Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
 			System.out.println("Result from getAllMyPhotos(): " + photoList);
@@ -290,7 +290,33 @@ public class PhotoService {
 			trans.begin();
 			Query q = em.createNativeQuery(
 					"SELECT * FROM photos p, phototag pt, tags t WHERE p.photoId = pt.photoId AND pt.tagId = t.tagId AND privacy = 'public' AND t.tagname = '"
-							+ tag + "' ORDER BY p.photoId DESC;",
+							+ tag + "' GROUP BY p.photoId ORDER BY p.photoId DESC;",
+					Photo.class);
+			photoList = q.getResultList();
+			trans.commit();
+			System.out.println("Result from getAllPublicPhotos(): " + photoList);
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		} finally {
+			em.close();
+		}
+		return setPasswordNull(photoList);
+	}
+	
+	public static List<Photo> getAllPublicPhotosByCustomTag(String hql) {
+		List<Photo> photoList = null;
+
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("mysqldb");
+		EntityManager em = emf.createEntityManager();
+
+		EntityTransaction trans = em.getTransaction();
+
+		try {
+			trans.begin();
+			Query q = em.createNativeQuery(
+					"SELECT * FROM photos p, phototag pt, tags t WHERE p.photoId = pt.photoId AND pt.tagId = t.tagId AND privacy = 'public' AND "
+							+ hql + " ORDER BY p.photoId DESC;",
 					Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
@@ -317,7 +343,7 @@ public class PhotoService {
 			Query q = em.createNativeQuery(
 					"SELECT * FROM photos p, alloweduser au, phototag pt, tags t WHERE p.photoId = au.photoId AND p.photoId = pt.photoId AND pt.tagId = t.tagId AND t.tagname = '"
 							+ tag + "' AND p.privacy = 'private' AND au.userId = " + userId
-							+ " ORDER BY p.photoId DESC;",
+							+ " GROUP BY p.photoId ORDER BY p.photoId DESC;",
 					Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
@@ -344,7 +370,33 @@ public class PhotoService {
 			Query q = em.createNativeQuery(
 					"SELECT * FROM photos p, alloweduser au, phototag pt, tags t, users u WHERE p.photoId = au.photoId AND p.photoId = pt.photoId AND pt.tagId = t.tagId AND au.userId = u.userId AND t.tagname = '"
 							+ tag + "' AND p.privacy = 'private' AND u.username = '" + username
-							+ "' ORDER BY p.photoId DESC;",
+							+ "' GROUP BY p.photoId ORDER BY p.photoId DESC;",
+					Photo.class);
+			photoList = q.getResultList();
+			trans.commit();
+			System.out.println("Result from getAllSharedPhotos(): " + photoList);
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		} finally {
+			em.close();
+		}
+		return setPasswordNull(photoList);
+	}
+	
+	public static List<Photo> getAllSharedPhotosByCustomTag(String hql, String username) {
+		List<Photo> photoList = null;
+
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("mysqldb");
+		EntityManager em = emf.createEntityManager();
+
+		EntityTransaction trans = em.getTransaction();
+
+		try {
+			trans.begin();
+			Query q = em.createNativeQuery(
+					"SELECT * FROM photos p, alloweduser au, phototag pt, tags t, users u WHERE p.photoId = au.photoId AND p.photoId = pt.photoId AND pt.tagId = t.tagId AND au.userId = u.userId AND p.privacy = 'private' AND u.username = '" + username
+							+ "' AND " + hql + " ORDER BY p.photoId DESC;",
 					Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
@@ -370,7 +422,7 @@ public class PhotoService {
 			trans.begin();
 			Query q = em.createNativeQuery(
 					"SELECT * FROM photos p, phototag pt, tags t WHERE p.photoId = pt.photoId AND pt.tagId = t.tagId AND p.userId = "
-							+ userId + " AND t.tagname = '" + tag + "' ORDER BY p.photoId DESC;",
+							+ userId + " AND t.tagname = '" + tag + "' GROUP BY p.photoId ORDER BY p.photoId DESC;",
 					Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
@@ -397,7 +449,34 @@ public class PhotoService {
 			Query q = em
 					.createNativeQuery(
 							"SELECT * FROM photos p, phototag pt, tags t, users u WHERE p.photoId = pt.photoId AND pt.tagId = t.tagId AND p.userId = u.userId AND u.username = '"
-									+ username + "' AND t.tagname = '" + tag + "' ORDER BY p.photoId DESC;",
+									+ username + "' AND t.tagname = '" + tag + "' GROUP BY p.photoId ORDER BY p.photoId DESC;",
+							Photo.class);
+			photoList = q.getResultList();
+			trans.commit();
+			System.out.println("Result from getAllMyPhotos(): " + photoList);
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		} finally {
+			em.close();
+		}
+		return setPasswordNull(photoList);
+	}
+	
+	public static List<Photo> getAllMyPhotosByCustomTag(String hql, String username) {
+		List<Photo> photoList = null;
+
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("mysqldb");
+		EntityManager em = emf.createEntityManager();
+
+		EntityTransaction trans = em.getTransaction();
+
+		try {
+			trans.begin();
+			Query q = em
+					.createNativeQuery(
+							"SELECT * FROM photos p, phototag pt, tags t, users u WHERE p.photoId = pt.photoId AND pt.tagId = t.tagId AND p.userId = u.userId AND u.username = '"
+									+ username + "' AND " + hql + " ORDER BY p.photoId DESC;",
 							Photo.class);
 			photoList = q.getResultList();
 			trans.commit();
@@ -423,7 +502,7 @@ public class PhotoService {
 			trans.begin();
 			Query q = em.createNativeQuery(
 					"SELECT * FROM photos p, alloweduser au WHERE p.photoId = au.photoId AND p.userId = " + otherUserId
-							+ " AND au.userId = " + userId + " OR p.privacy = 'public' ORDER BY p.photoId DESC;",
+							+ " AND au.userId = " + userId + " OR p.privacy = 'public' GROUP BY p.photoId ORDER BY p.photoId DESC;",
 					Photo.class);
 			photoList = q.getResultList();
 			trans.commit();

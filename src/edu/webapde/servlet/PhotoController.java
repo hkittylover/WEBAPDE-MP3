@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 import edu.webapde.bean.Photo;
 import edu.webapde.bean.User;
 import edu.webapde.service.PhotoService;
+import edu.webapde.service.TagService;
 import edu.webapde.service.UserService;
 
 /**
@@ -59,6 +60,10 @@ public class PhotoController extends HttpServlet {
 			checkRole(request, response);
 		}
 		request.setAttribute("action", "none");
+		List<String> tags = TagService.getAllTagnames();
+		request.setAttribute("tagnames", new Gson().toJson(tags));
+		List<String> users = UserService.getAllUsername();
+		request.setAttribute("usernames", new Gson().toJson(users));
 		switch (urlPattern) {
 		case "/allphotos":
 			request.setAttribute("action", "allphotos");
@@ -102,7 +107,7 @@ public class PhotoController extends HttpServlet {
 		Cookie[] cookies = request.getCookies();
 		String cookieValue1 = null;
 		String cookieValue2 = null;
-
+		
 		if (cookies != null) {
 			for (Cookie c : cookies) {
 				// find cookie to check if remembered
@@ -257,6 +262,7 @@ public class PhotoController extends HttpServlet {
 		HttpSession session = request.getSession();
 		String role = (String) session.getAttribute("role");
 		String keyword = request.getParameter("keyword");
+		String action = request.getParameter("action");
 		request.setAttribute("keyword", keyword);
 		System.out.println("ROLE: " + role);
 
@@ -265,31 +271,91 @@ public class PhotoController extends HttpServlet {
 
 		if (keyword == null)
 			keyword = "";
-
-		if (role.equals("user")) {
-			String username = (String) session.getAttribute("sUsername");
-			List<Photo> publicPhotoList = PhotoService.getAllPublicPhotosByTag(keyword);
-			request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
-
-			List<Photo> sharedPhotoList = PhotoService.getAllSharedPhotosByTag(keyword, username);
-			request.setAttribute("sharedPhotoList", new Gson().toJson(sharedPhotoList));
-
-			List<Photo> myPhotoList = PhotoService.getAllMyPhotosByTag(keyword, username);
-			request.setAttribute("myPhotoList", new Gson().toJson(myPhotoList));
-
-			System.out.println("SEARCHING AS USER...");
-			// forward to success page or page if success
-			RequestDispatcher rd = request.getRequestDispatcher("search.jsp");
-			rd.forward(request, response);
+		if(action.equalsIgnoreCase("NONE")) {
+			if (role.equals("user")) {
+				String username = (String) session.getAttribute("sUsername");
+				List<Photo> publicPhotoList = PhotoService.getAllPublicPhotosByTag(keyword);
+				request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
+	
+				List<Photo> sharedPhotoList = PhotoService.getAllSharedPhotosByTag(keyword, username);
+				request.setAttribute("sharedPhotoList", new Gson().toJson(sharedPhotoList));
+	
+				List<Photo> myPhotoList = PhotoService.getAllMyPhotosByTag(keyword, username);
+				request.setAttribute("myPhotoList", new Gson().toJson(myPhotoList));
+	
+				System.out.println("SEARCHING AS USER...");
+				// forward to success page or page if success
+				RequestDispatcher rd = request.getRequestDispatcher("search.jsp");
+				rd.forward(request, response);
+			} else {
+				List<Photo> publicPhotoList = PhotoService.getAllPublicPhotosByTag(keyword);
+				request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
+				request.setAttribute("sharedPhotoList", "[]");
+				request.setAttribute("myPhotoList", "[]");
+				System.out.println("SEARCHING AS GUEST...");
+				// forward to success page or page if success
+				RequestDispatcher rd = request.getRequestDispatcher("search.jsp");
+				rd.forward(request, response);
+			}
 		} else {
-			List<Photo> publicPhotoList = PhotoService.getAllPublicPhotosByTag(keyword);
-			request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
-			request.setAttribute("sharedPhotoList", "[]");
-			request.setAttribute("myPhotoList", "[]");
-			System.out.println("SEARCHING AS GUEST...");
-			// forward to success page or page if success
-			RequestDispatcher rd = request.getRequestDispatcher("search.jsp");
-			rd.forward(request, response);
+			String keyword2 = request.getParameter("keyword2");
+			if (keyword2 == null)
+				keyword2 = "";
+			if (role.equals("user")) {
+				String username = (String) session.getAttribute("sUsername");
+				if(action.equals("AND")) {
+					String hql = "(t.tagname = 'game' OR t.tagname = 'best') GROUP BY p.photoId HAVING COUNT(t.tagId) = 2";
+					List<Photo> publicPhotoList = PhotoService.getAllPublicPhotosByCustomTag(hql);
+					request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
+		
+					List<Photo> sharedPhotoList = PhotoService.getAllSharedPhotosByCustomTag(hql, username);
+					request.setAttribute("sharedPhotoList", new Gson().toJson(sharedPhotoList));
+		
+					List<Photo> myPhotoList = PhotoService.getAllMyPhotosByCustomTag(hql, username);
+					request.setAttribute("myPhotoList", new Gson().toJson(myPhotoList));
+				} else if(action.equals("OR")) {
+					String hql = "(t.tagname = '" + keyword + "' OR t.tagname = '" + keyword2 + "')  GROUP BY p.photoId";
+					List<Photo> publicPhotoList = PhotoService.getAllPublicPhotosByCustomTag(hql);
+					request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
+		
+					List<Photo> sharedPhotoList = PhotoService.getAllSharedPhotosByCustomTag(hql, username);
+					request.setAttribute("sharedPhotoList", new Gson().toJson(sharedPhotoList));
+		
+					List<Photo> myPhotoList = PhotoService.getAllMyPhotosByCustomTag(hql, username);
+					request.setAttribute("myPhotoList", new Gson().toJson(myPhotoList));
+				} else {
+					request.setAttribute("publicPhotoList", "[]");
+					request.setAttribute("sharedPhotoList", "[]");
+					request.setAttribute("myPhotoList", "[]");
+				}
+				System.out.println("SEARCHING AS USER...");
+				// forward to success page or page if success
+				RequestDispatcher rd = request.getRequestDispatcher("search.jsp");
+				rd.forward(request, response);
+			} else {
+				if(action.equals("AND")) {
+					String hql = "(t.tagname = 'game' OR t.tagname = 'best') GROUP BY p.photoId HAVING COUNT(t.tagId) = 2";
+					List<Photo> publicPhotoList = PhotoService.getAllPublicPhotosByCustomTag(hql);
+					request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
+					request.setAttribute("sharedPhotoList", "[]");
+					request.setAttribute("myPhotoList", "[]");
+				} else if(action.equals("OR")) {
+					String hql = "(t.tagname = '" + keyword + "' OR t.tagname = '" + keyword2 + "')  GROUP BY p.photoId";
+					List<Photo> publicPhotoList = PhotoService.getAllPublicPhotosByCustomTag(hql);
+					request.setAttribute("publicPhotoList", new Gson().toJson(publicPhotoList));
+					request.setAttribute("sharedPhotoList", "[]");
+					request.setAttribute("myPhotoList", "[]");
+				} else {
+					request.setAttribute("publicPhotoList", "[]");
+					request.setAttribute("sharedPhotoList", "[]");
+					request.setAttribute("myPhotoList", "[]");
+				}
+				
+				System.out.println("SEARCHING AS GUEST...");
+				// forward to success page or page if success
+				RequestDispatcher rd = request.getRequestDispatcher("search.jsp");
+				rd.forward(request, response);
+			}
 		}
 	}
 
